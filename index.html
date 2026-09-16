@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TAB HRK Control Panel</title>
+  <style>
+    :root {
+      --panel: #d8dbd7;
+      --panel-dark: #aeb3af;
+      --ink: #171b18;
+      --muted: #656c67;
+      --line: #858c87;
+      --red: #c72f2f;
+      --amber: #db7c21;
+      --green: #258a4b;
+      --cream: #f1f0e9;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      color: var(--ink);
+      font-family: "Arial Narrow", "Franklin Gothic Medium", sans-serif;
+      background-color: #242927;
+      background-image:
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    .panel-a {
+      width: min(1180px, 100%);
+      padding: 18px;
+      border: 2px solid #747a76;
+      border-radius: 6px;
+      background: linear-gradient(145deg, #c5c9c5, #999f9b);
+      box-shadow: 0 22px 50px rgba(0,0,0,.42), inset 0 1px rgba(255,255,255,.65);
+    }
+
+    .panel-a__header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      min-height: 128px;
+      padding: 0 6px 14px;
+    }
+
+    .panel-a__identity {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 18px;
+      padding-right: 24px;
+    }
+    .brand { font-size: 22px; font-weight: 800; letter-spacing: 0; }
+
+    .hrk-models { display: grid; grid-template-columns: repeat(4, 42px); justify-content: center; gap: 8px; }
+    .hrk-model { display: grid; justify-items: center; gap: 4px; font: 800 8px Consolas, monospace; }
+    .hoist {
+      position: relative;
+      width: 42px;
+      height: 48px;
+      border-top: 5px solid #3f4641;
+    }
+    .hoist__block {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 8px;
+      width: 26px;
+      height: 15px;
+      border: 2px solid #444b47;
+      border-radius: 3px;
+      background: linear-gradient(145deg, #e3a126 0 48%, #bc641c 49% 100%);
+      box-shadow: inset 0 2px rgba(255,255,255,.4), 0 2px 2px rgba(0,0,0,.22);
+      transform: translateY(var(--hoist-position, 0px));
+      will-change: transform;
+    }
+
+    .panel-a__controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 44px;
+      min-height: 110px;
+      border-left: 1px solid rgba(80, 87, 82, .45);
+    }
+
+    .master-control { display: grid; justify-items: center; gap: 9px; }
+    .master-control__label { font: 800 10px Consolas, monospace; }
+    .panel-a-state { margin: 0; }
+
+    .panel-a-emergency {
+      width: 76px;
+      height: 76px;
+      border-width: 8px;
+      box-shadow: 0 6px 0 #8b1d1d, 0 8px 11px rgba(0,0,0,.3), inset 0 4px 4px rgba(255,255,255,.28);
+    }
+    .panel-a-emergency span { font-size: 9px; }
+    .panel-a-emergency.is-pressed {
+      transform: translateY(5px);
+      box-shadow: 0 1px 0 #8b1d1d, 0 2px 5px rgba(0,0,0,.28), inset 0 3px 8px rgba(80,0,0,.45);
+    }
+
+    .reset-button {
+      width: 78px;
+      height: 54px;
+      border: 5px solid #5d645f;
+      border-radius: 5px;
+      background: #ecebe4;
+      color: #202521;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 900;
+      box-shadow: 0 5px 0 #444a46, 0 7px 8px rgba(0,0,0,.25), inset 0 3px 5px rgba(255,255,255,.7);
+    }
+    .reset-button:active {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 #444a46, 0 2px 4px rgba(0,0,0,.25), inset 0 3px 6px rgba(0,0,0,.12);
+    }
+
+    .blue-beacon {
+      position: relative;
+      width: 66px;
+      height: 58px;
+      border: 5px solid #555d58;
+      border-bottom-width: 9px;
+      border-radius: 30px 30px 8px 8px;
+      background: radial-gradient(circle at 40% 30%, #9ee8ff 0 8%, #168ed2 36%, #064c8c 75%);
+      box-shadow: 0 0 2px #168ed2, inset 0 2px 3px rgba(255,255,255,.35);
+      filter: brightness(.45);
+    }
+    .blue-beacon.is-flashing {
+      box-shadow: 0 0 8px #2bbcff, inset 0 2px 3px rgba(255,255,255,.65);
+      filter: brightness(1);
+      animation: beacon-flash 1s steps(2, end) infinite;
+    }
+    .blue-beacon::after {
+      content: "";
+      position: absolute;
+      right: 8px;
+      bottom: -15px;
+      left: 8px;
+      height: 7px;
+      border-radius: 2px;
+      background: #343a36;
+    }
+
+    @keyframes beacon-flash {
+      50% { filter: brightness(.55); box-shadow: 0 0 2px #168ed2; }
+    }
+
+    .panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .sub-panel {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1.12fr 1fr 1fr;
+      min-height: 480px;
+      overflow: hidden;
+      border: 2px solid #777e79;
+      border-radius: 5px;
+      background: var(--panel);
+      box-shadow: inset 0 0 20px rgba(0,0,0,.09), 0 2px 3px rgba(0,0,0,.25);
+    }
+
+    .sub-panel::before,
+    .sub-panel::after {
+      content: "";
+      position: absolute;
+      z-index: 2;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #e7e9e7 0 12%, #646a66 45%, #353936 70%);
+    }
+    .sub-panel::before { top: 9px; left: 9px; }
+    .sub-panel::after { right: 9px; bottom: 9px; }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 22px 14px;
+      border-right: 1px solid var(--line);
+    }
+    .column:last-child { border-right: 0; }
+
+    .column-title {
+      width: 100%;
+      margin: 0 0 28px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #454b47;
+      text-align: center;
+      font: 800 16px Consolas, monospace;
+    }
+
+    button { font: inherit; }
+
+    .emergency {
+      width: 102px;
+      height: 102px;
+      padding: 0;
+      border: 10px solid #efc72c;
+      border-radius: 50%;
+      background: var(--red);
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 8px 0 #8b1d1d, 0 10px 14px rgba(0,0,0,.3), inset 0 4px 4px rgba(255,255,255,.28);
+      transition: transform .12s, box-shadow .12s;
+    }
+
+    .emergency span { display: block; font-size: 12px; font-weight: 900; line-height: 1.05; }
+    .emergency.is-pressed {
+      transform: translateY(7px);
+      box-shadow: 0 1px 0 #8b1d1d, 0 3px 7px rgba(0,0,0,.28), inset 0 3px 8px rgba(80,0,0,.45);
+    }
+    .emergency:disabled {
+      cursor: not-allowed;
+      opacity: .42;
+      filter: grayscale(.7);
+      transform: none;
+      box-shadow: 0 4px 0 #6f2525, 0 5px 7px rgba(0,0,0,.2), inset 0 3px 5px rgba(255,255,255,.15);
+    }
+    .emergency:focus-visible, .control-button:focus-visible, .selector:focus-visible, .reset-button:focus-visible { outline: 3px solid #136f9d; outline-offset: 4px; }
+
+    .state-text {
+      min-height: 16px;
+      margin: 16px 0 20px;
+      color: var(--muted);
+      font: 700 11px Consolas, monospace;
+      text-transform: uppercase;
+    }
+    .state-text.alarm { color: #a21717; }
+
+    .speaker {
+      width: 96px;
+      height: 70px;
+      margin-bottom: 26px;
+      border: 5px solid #4b504d;
+      border-radius: 5px;
+      background-color: #242826;
+      background-image: radial-gradient(circle, #070807 2px, transparent 2.5px);
+      background-size: 11px 11px;
+      box-shadow: inset 0 2px 8px #000, 0 2px rgba(255,255,255,.65);
+    }
+
+    .selector-label { margin-bottom: 10px; font-size: 11px; font-weight: 800; }
+    .selector-row { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; max-width: 150px; }
+    .selector-row span { text-align: center; font: 700 8px Consolas, monospace; }
+
+    .selector {
+      position: relative;
+      width: 72px;
+      height: 72px;
+      margin-top: 8px;
+      padding: 0;
+      border: 7px solid #636965;
+      border-radius: 50%;
+      background: radial-gradient(circle, #f3f2ec 0 45%, #b8bcb8 46% 100%);
+      cursor: pointer;
+      box-shadow: 0 3px 6px rgba(0,0,0,.35);
+    }
+    .selector::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 50%;
+      width: 9px;
+      height: 31px;
+      border-radius: 3px;
+      background: #282d2a;
+      transform-origin: 50% 29px;
+      transform: translateX(-50%) rotate(var(--angle));
+      transition: transform .22s ease;
+    }
+
+    .controls { gap: 18px; }
+    .controls .column-title { margin-bottom: 34px; }
+
+    .control-button {
+      width: 104px;
+      height: 92px;
+      border: 7px solid #686e6a;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 900;
+      text-shadow: 0 1px 2px rgba(0,0,0,.6);
+      box-shadow: 0 6px 0 #404542, 0 8px 9px rgba(0,0,0,.27), inset 0 5px 8px rgba(255,255,255,.25);
+      transition: transform .08s, box-shadow .08s, filter .08s;
+    }
+    .control-button:active, .control-button.is-active {
+      transform: translateY(5px);
+      box-shadow: 0 1px 0 #404542, 0 2px 4px rgba(0,0,0,.3), inset 0 4px 9px rgba(0,0,0,.25);
+      filter: brightness(.88);
+    }
+    .control-button:disabled {
+      cursor: not-allowed;
+      opacity: .42;
+      filter: grayscale(.7);
+      transform: none;
+      box-shadow: 0 3px 0 #555b57, 0 4px 5px rgba(0,0,0,.2), inset 0 3px 6px rgba(255,255,255,.15);
+    }
+    .up { background: var(--red); }
+    .stop { background: var(--amber); }
+    .down { background: var(--green); }
+    .arrow { display: block; font-size: 28px; line-height: 20px; }
+
+    @media (max-width: 900px) {
+      body { padding: 14px; }
+      .panel-a__header { grid-template-columns: 1fr; }
+      .panel-a__identity { min-height: 110px; padding-right: 0; }
+      .panel-a__controls { border-top: 1px solid rgba(80, 87, 82, .45); border-left: 0; }
+      .panel-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .blue-beacon { animation-duration: 2s; }
+    }
+
+    @media (max-width: 520px) {
+      .panel-a { padding: 10px; }
+      .panel-a__identity { grid-template-columns: 1fr; gap: 12px; padding: 10px 4px; }
+      .brand { text-align: center; }
+      .hrk-models { grid-row: 2; }
+      .sub-panel { grid-template-columns: 1fr 1fr; }
+      .utility { grid-column: 1 / -1; border-right: 0; border-bottom: 1px solid var(--line); }
+      .controls { border-right: 1px solid var(--line); }
+      .controls:last-child { border-right: 0; }
+      .control-button { width: min(104px, 100%); }
+    }
+  </style>
+</head>
+<body>
+  <main class="panel-a">
+    <header class="panel-a__header">
+      <div class="panel-a__identity">
+        <div class="brand">TAB HRK</div>
+        <div class="hrk-models" role="img" aria-label="Models of HRK1, HRK2, HRK3 and HRK4">
+          <div class="hrk-model"><div class="hoist"><span class="hoist__block"></span></div><span>HRK1</span></div>
+          <div class="hrk-model"><div class="hoist"><span class="hoist__block"></span></div><span>HRK2</span></div>
+          <div class="hrk-model"><div class="hoist"><span class="hoist__block"></span></div><span>HRK3</span></div>
+          <div class="hrk-model"><div class="hoist"><span class="hoist__block"></span></div><span>HRK4</span></div>
+        </div>
+      </div>
+      <div class="panel-a__controls" aria-label="Panel A controls">
+        <div class="master-control">
+          <button class="emergency panel-a-emergency" type="button" aria-pressed="false" aria-label="Panel A emergency">
+            <span>EMERGENCY</span>
+          </button>
+          <span class="state-text panel-a-state" aria-live="polite">Ready</span>
+        </div>
+        <div class="master-control">
+          <div class="blue-beacon" role="img" aria-label="Blue flashing warning light"></div>
+          <span class="master-control__label">WARNING</span>
+        </div>
+        <div class="master-control">
+          <button class="reset-button" type="button">RESET</button>
+          <span class="master-control__label">SYSTEM</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="panel-grid" id="panel-grid"></div>
+  </main>
+
+  <template id="sub-panel-template">
+    <section class="sub-panel">
+      <div class="column utility">
+        <h2 class="column-title">SYSTEM</h2>
+        <button class="emergency" type="button" aria-pressed="false" aria-label="Emergency">
+          <span>EMERGENCY</span>
+        </button>
+        <div class="state-text" aria-live="polite">Ready</div>
+        <div class="speaker" role="img" aria-label="Speaker"></div>
+        <div class="selector-label">MODE SELECT</div>
+        <div class="selector-row" aria-hidden="true"><span>MASTER</span><span>OFF</span><span>M &amp; S</span></div>
+        <button class="selector" type="button" style="--angle: 0deg" aria-label="Mode: Off" title="Click to change mode"></button>
+      </div>
+
+      <div class="column controls">
+        <h2 class="column-title">HRK1</h2>
+        <button class="control-button up" type="button"><span class="arrow">▲</span>UP</button>
+        <button class="control-button stop" type="button">STOP</button>
+        <button class="control-button down" type="button"><span class="arrow">▼</span>DOWN</button>
+      </div>
+
+      <div class="column controls">
+        <h2 class="column-title">HRK2</h2>
+        <button class="control-button up" type="button"><span class="arrow">▲</span>UP</button>
+        <button class="control-button stop" type="button">STOP</button>
+        <button class="control-button down" type="button"><span class="arrow">▼</span>DOWN</button>
+      </div>
+    </section>
+  </template>
+
+  <script>
+    const panelGrid = document.querySelector("#panel-grid");
+    const template = document.querySelector("#sub-panel-template");
+    const panelHoists = [["HRK1", "HRK2"], ["HRK3", "HRK4"]];
+    const modes = [
+      { name: "Master", angle: -45 },
+      { name: "Off", angle: 0 },
+      { name: "Master & Slave", angle: 45 }
+    ];
+
+    panelHoists.forEach((hoists) => {
+      const panel = template.content.cloneNode(true);
+      panel.querySelectorAll(".controls .column-title").forEach((title, index) => {
+        title.textContent = hoists[index];
+      });
+      panelGrid.append(panel);
+    });
+
+    const hoistModels = new Map(
+      Array.from(document.querySelectorAll(".hrk-model"), (model) => [model.textContent.trim(), model])
+    );
+    const blueBeacon = document.querySelector(".blue-beacon");
+
+    function updateBeacon() {
+      const buttonPressed = document.querySelector('.emergency[aria-pressed="true"], .control-button[aria-pressed="true"]');
+      blueBeacon.classList.toggle("is-flashing", Boolean(buttonPressed));
+      blueBeacon.setAttribute("aria-label", buttonPressed ? "Blue warning light flashing" : "Blue warning light dimmed");
+    }
+
+    let audioContext;
+    let emergencyBuzzerTimer;
+
+    function playTone(frequency, duration, delay = 0) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      audioContext ??= new AudioContext();
+      if (audioContext.state === "suspended") audioContext.resume();
+
+      const startTime = audioContext.currentTime + delay;
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      oscillator.type = "square";
+      oscillator.frequency.setValueAtTime(frequency, startTime);
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.08, startTime + 0.015);
+      gain.gain.setValueAtTime(0.08, startTime + duration - 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.start(startTime);
+      oscillator.stop(startTime + duration);
+    }
+
+    function playOperationSound(command) {
+      if (command === "up") {
+        playTone(620, 0.11);
+        playTone(860, 0.13, 0.12);
+      } else if (command === "down") {
+        playTone(520, 0.11);
+        playTone(340, 0.13, 0.12);
+      } else {
+        playTone(230, 0.2);
+      }
+    }
+
+    function soundEmergencyPulse() {
+      playTone(920, 0.18);
+      playTone(620, 0.18, 0.2);
+    }
+
+    function updateEmergencyBuzzer() {
+      const emergencyActive = document.querySelector('.emergency[aria-pressed="true"]');
+      if (emergencyActive && !emergencyBuzzerTimer) {
+        soundEmergencyPulse();
+        emergencyBuzzerTimer = window.setInterval(soundEmergencyPulse, 520);
+      } else if (!emergencyActive && emergencyBuzzerTimer) {
+        window.clearInterval(emergencyBuzzerTimer);
+        emergencyBuzzerTimer = undefined;
+      }
+    }
+
+    document.querySelectorAll(".controls").forEach((controls) => {
+      const hoistName = controls.querySelector(".column-title").textContent;
+      const model = hoistModels.get(hoistName);
+      const hoistBlock = model.querySelector(".hoist__block");
+      const upButton = controls.querySelector(".up");
+      const stopButton = controls.querySelector(".stop");
+      const downButton = controls.querySelector(".down");
+      const directionButtons = [upButton, stopButton, downButton];
+      let hoistPosition = 0;
+      let direction = 0;
+      let animationFrame = 0;
+      let previousTime = 0;
+      let operationBuzzerTimer;
+
+      function stopOperationBuzzer() {
+        if (!operationBuzzerTimer) return;
+        window.clearInterval(operationBuzzerTimer);
+        operationBuzzerTimer = undefined;
+      }
+
+      function startOperationBuzzer(command) {
+        stopOperationBuzzer();
+        playOperationSound(command);
+        operationBuzzerTimer = window.setInterval(() => playOperationSound(command), 440);
+      }
+
+      function setButtonState(activeButton) {
+        directionButtons.forEach((button) => {
+          const active = button === activeButton;
+          button.classList.toggle("is-active", active);
+          button.setAttribute("aria-pressed", String(active));
+        });
+        updateBeacon();
+      }
+
+      function move(timestamp) {
+        if (!previousTime) previousTime = timestamp;
+        hoistPosition += direction * (timestamp - previousTime) * 0.012;
+        hoistPosition = Math.max(-20, Math.min(0, hoistPosition));
+        hoistBlock.style.setProperty("--hoist-position", `${hoistPosition}px`);
+        previousTime = timestamp;
+
+        const reachedUpperLimit = direction < 0 && hoistPosition === -20;
+        const reachedLowerLimit = direction > 0 && hoistPosition === 0;
+        if (reachedUpperLimit || reachedLowerLimit) {
+          direction = 0;
+          setButtonState(stopButton);
+          stopOperationBuzzer();
+          return;
+        }
+        animationFrame = requestAnimationFrame(move);
+      }
+
+      function setDirection(nextDirection, activeButton) {
+        cancelAnimationFrame(animationFrame);
+        direction = nextDirection;
+        previousTime = 0;
+        setButtonState(activeButton);
+        if (direction) animationFrame = requestAnimationFrame(move);
+      }
+
+      upButton.addEventListener("click", () => {
+        startOperationBuzzer("up");
+        setDirection(-1, upButton);
+      });
+      stopButton.addEventListener("click", () => {
+        startOperationBuzzer("stop");
+        setDirection(0, stopButton);
+      });
+      downButton.addEventListener("click", () => {
+        startOperationBuzzer("down");
+        setDirection(1, downButton);
+      });
+      controls.addEventListener("controls-disabled", () => {
+        stopOperationBuzzer();
+        setDirection(0, null);
+      });
+      controls.addEventListener("emergency-up", () => {
+        stopOperationBuzzer();
+        setDirection(-1, upButton);
+      });
+      controls.addEventListener("system-reset", () => {
+        stopOperationBuzzer();
+        setDirection(0, null);
+        hoistPosition = 0;
+        hoistBlock.style.setProperty("--hoist-position", "0px");
+      });
+    });
+
+    const panelAEmergency = document.querySelector(".panel-a-emergency");
+    const panelAStatus = document.querySelector(".panel-a-state");
+
+    function setEmergencyState(emergency, status, pressed) {
+      emergency.setAttribute("aria-pressed", String(pressed));
+      emergency.classList.toggle("is-pressed", pressed);
+      status.textContent = pressed ? "Emergency active" : "Ready";
+      status.classList.toggle("alarm", pressed);
+      updateBeacon();
+      updateEmergencyBuzzer();
+    }
+
+    function updatePanelAEmergencyLockout() {
+      const panels = Array.from(document.querySelectorAll(".sub-panel"));
+      const enabled = panels.every((panel) => panel.dataset.mode && panel.dataset.mode !== "Off");
+      const wasPressed = panelAEmergency.getAttribute("aria-pressed") === "true";
+      panelAEmergency.disabled = !enabled;
+      if (!enabled) {
+        setEmergencyState(panelAEmergency, panelAStatus, false);
+        if (wasPressed) {
+          document.querySelectorAll(".controls").forEach((controls) => {
+            controls.dispatchEvent(new Event("controls-disabled"));
+          });
+        }
+      }
+    }
+
+    panelAEmergency.addEventListener("click", () => {
+      if (panelAEmergency.disabled) return;
+      const pressed = panelAEmergency.getAttribute("aria-pressed") !== "true";
+      setEmergencyState(panelAEmergency, panelAStatus, pressed);
+      if (pressed) {
+        document.querySelectorAll(".controls").forEach((controls) => {
+          controls.dispatchEvent(new Event("emergency-up"));
+        });
+      }
+    });
+
+    document.querySelectorAll(".sub-panel").forEach((panel) => {
+      const emergency = panel.querySelector(".emergency");
+      const status = panel.querySelector(".state-text");
+      const selector = panel.querySelector(".selector");
+      const controlGroups = panel.querySelectorAll(".controls");
+      const controlButtons = panel.querySelectorAll(".control-button");
+      let modeIndex = 1;
+
+      function updateControlLockout() {
+        const controlsEnabled = modes[modeIndex].name !== "Off";
+        panel.dataset.mode = modes[modeIndex].name;
+        if (!controlsEnabled) {
+          controlGroups.forEach((controls) => controls.dispatchEvent(new Event("controls-disabled")));
+          setEmergencyState(emergency, status, false);
+        }
+        emergency.disabled = !controlsEnabled;
+        controlButtons.forEach((button) => { button.disabled = !controlsEnabled; });
+        updatePanelAEmergencyLockout();
+      }
+
+      updateControlLockout();
+
+      emergency.addEventListener("click", () => {
+        if (emergency.disabled) return;
+        const pressed = emergency.getAttribute("aria-pressed") !== "true";
+        setEmergencyState(emergency, status, pressed);
+        if (pressed) {
+          controlGroups.forEach((controls) => controls.dispatchEvent(new Event("emergency-up")));
+        }
+      });
+
+      selector.addEventListener("click", () => {
+        modeIndex = (modeIndex + 1) % modes.length;
+        const mode = modes[modeIndex];
+        selector.style.setProperty("--angle", `${mode.angle}deg`);
+        selector.setAttribute("aria-label", `Mode: ${mode.name}`);
+        updateControlLockout();
+      });
+
+      panel.addEventListener("system-reset", () => {
+        modeIndex = 1;
+        selector.style.setProperty("--angle", "0deg");
+        selector.setAttribute("aria-label", "Mode: Off");
+        updateControlLockout();
+      });
+    });
+
+    document.querySelector(".reset-button").addEventListener("click", () => {
+      document.querySelectorAll(".controls").forEach((controls) => {
+        controls.dispatchEvent(new Event("system-reset"));
+      });
+      document.querySelectorAll(".sub-panel").forEach((panel) => {
+        panel.dispatchEvent(new Event("system-reset"));
+      });
+      setEmergencyState(panelAEmergency, panelAStatus, false);
+    });
+  </script>
+</body>
+</html>

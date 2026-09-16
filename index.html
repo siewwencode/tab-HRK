@@ -529,7 +529,6 @@
         const reachedLowerLimit = direction > 0 && hoistPosition === 0;
         if (reachedUpperLimit || reachedLowerLimit) {
           direction = 0;
-          setButtonState(stopButton);
           stopOperationBuzzer();
           return;
         }

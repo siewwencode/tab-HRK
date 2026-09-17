@@ -426,7 +426,7 @@
     const blueBeacon = document.querySelector(".blue-beacon");
 
     function updateBeacon() {
-      const buttonPressed = document.querySelector('.emergency[aria-pressed="true"], .control-button[aria-pressed="true"]');
+      const buttonPressed = document.querySelector('.emergency[aria-pressed="true"]:not([data-alert-suppressed="true"]), .control-button[aria-pressed="true"]');
       blueBeacon.classList.toggle("is-flashing", Boolean(buttonPressed));
       blueBeacon.setAttribute("aria-label", buttonPressed ? "Blue warning light flashing" : "Blue warning light dimmed");
     }
@@ -473,7 +473,7 @@
     }
 
     function updateEmergencyBuzzer() {
-      const emergencyActive = document.querySelector('.emergency[aria-pressed="true"]');
+      const emergencyActive = document.querySelector('.emergency[aria-pressed="true"]:not([data-alert-suppressed="true"])');
       if (emergencyActive && !emergencyBuzzerTimer) {
         soundEmergencyPulse();
         emergencyBuzzerTimer = window.setInterval(soundEmergencyPulse, 520);
@@ -518,6 +518,16 @@
         updateBeacon();
       }
 
+      function updateButtonLockout() {
+        const panel = controls.closest(".sub-panel");
+        const localEmergency = panel.querySelector(".emergency").getAttribute("aria-pressed") === "true";
+        const panelAEmergencyActive = panelAEmergency.getAttribute("aria-pressed") === "true";
+        const modeOff = panel.dataset.mode === "Off";
+        directionButtons.forEach((button) => {
+          button.disabled = modeOff || localEmergency || panelAEmergencyActive;
+        });
+      }
+
       function move(timestamp) {
         if (!previousTime) previousTime = timestamp;
         hoistPosition += direction * (timestamp - previousTime) * 0.012;
@@ -530,6 +540,12 @@
         if (reachedUpperLimit || reachedLowerLimit) {
           direction = 0;
           stopOperationBuzzer();
+          document.querySelectorAll('.emergency[aria-pressed="true"]').forEach((emergency) => {
+            emergency.dataset.alertSuppressed = "true";
+          });
+          setButtonState(null);
+          updateBeacon();
+          updateEmergencyBuzzer();
           return;
         }
         animationFrame = requestAnimationFrame(move);
@@ -558,10 +574,18 @@
       controls.addEventListener("controls-disabled", () => {
         stopOperationBuzzer();
         setDirection(0, null);
+        updateButtonLockout();
+      });
+      controls.addEventListener("emergency-lockout-changed", () => {
+        updateButtonLockout();
       });
       controls.addEventListener("emergency-up", () => {
         stopOperationBuzzer();
         setDirection(-1, upButton);
+      });
+      controls.addEventListener("emergency-down", () => {
+        startOperationBuzzer("down");
+        setDirection(1, downButton);
       });
       controls.addEventListener("system-reset", () => {
         stopOperationBuzzer();
@@ -577,6 +601,7 @@
     function setEmergencyState(emergency, status, pressed) {
       emergency.setAttribute("aria-pressed", String(pressed));
       emergency.classList.toggle("is-pressed", pressed);
+      emergency.toggleAttribute("data-alert-suppressed", false);
       status.textContent = pressed ? "Emergency active" : "Ready";
       status.classList.toggle("alarm", pressed);
       updateBeacon();
@@ -605,8 +630,17 @@
       if (pressed) {
         document.querySelectorAll(".controls").forEach((controls) => {
           controls.dispatchEvent(new Event("emergency-up"));
+          controls.dispatchEvent(new Event("emergency-lockout-changed"));
+        });
+      } else {
+        document.querySelectorAll(".controls").forEach((controls) => {
+          controls.dispatchEvent(new Event("emergency-down"));
+          controls.dispatchEvent(new Event("emergency-lockout-changed"));
         });
       }
+      document.querySelectorAll(".sub-panel").forEach((panel) => {
+        panel.dispatchEvent(new Event("panel-a-emergency-changed"));
+      });
     });
 
     document.querySelectorAll(".sub-panel").forEach((panel) => {
@@ -618,9 +652,11 @@
       let modeIndex = 1;
 
       function updateControlLockout() {
-        const controlsEnabled = modes[modeIndex].name !== "Off";
+        const panelAEmergencyActive = panelAEmergency.getAttribute("aria-pressed") === "true";
+        const modeOff = modes[modeIndex].name === "Off";
+        const controlsEnabled = !modeOff && !panelAEmergencyActive;
         panel.dataset.mode = modes[modeIndex].name;
-        if (!controlsEnabled) {
+        if (modeOff) {
           controlGroups.forEach((controls) => controls.dispatchEvent(new Event("controls-disabled")));
           setEmergencyState(emergency, status, false);
         }
@@ -637,7 +673,10 @@
         setEmergencyState(emergency, status, pressed);
         if (pressed) {
           controlGroups.forEach((controls) => controls.dispatchEvent(new Event("emergency-up")));
+        } else {
+          controlGroups.forEach((controls) => controls.dispatchEvent(new Event("emergency-down")));
         }
+        controlGroups.forEach((controls) => controls.dispatchEvent(new Event("emergency-lockout-changed")));
       });
 
       selector.addEventListener("click", () => {
@@ -654,6 +693,7 @@
         selector.setAttribute("aria-label", "Mode: Off");
         updateControlLockout();
       });
+      panel.addEventListener("panel-a-emergency-changed", updateControlLockout);
     });
 
     document.querySelector(".reset-button").addEventListener("click", () => {

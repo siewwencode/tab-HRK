@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TAB HRK Physical Mock-up Circuit</title>
+  <style>
+    :root {
+      --ink: #17201d;
+      --muted: #62706a;
+      --paper: #f3f0e7;
+      --panel: #fffdf7;
+      --line: #c9c4b6;
+      --signal: #147a8a;
+      --power: #c35432;
+      --ground: #53665b;
+      --safety: #c58a16;
+      --accent: #286e54;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background:
+        linear-gradient(rgba(255,255,255,.45) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.45) 1px, transparent 1px),
+        var(--paper);
+      background-size: 22px 22px;
+    }
+    .page { width: min(1480px, 100%); margin: auto; padding: 28px; }
+    header { display: flex; justify-content: space-between; gap: 24px; align-items: end; margin-bottom: 22px; }
+    h1, h2, p { margin-top: 0; }
+    h1 { max-width: 780px; margin-bottom: 8px; font: 800 clamp(28px, 4vw, 52px)/.98 Georgia, serif; letter-spacing: 0; }
+    header p { max-width: 720px; margin-bottom: 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+    .warning { max-width: 360px; padding: 14px 16px; border-left: 5px solid var(--power); background: #fff8ed; color: #6f321e; font-size: 13px; line-height: 1.45; }
+    .diagram-shell { overflow: auto; padding: 18px; border: 1px solid var(--line); background: rgba(255,253,247,.8); box-shadow: 0 14px 32px rgba(55,47,31,.12); }
+    .diagram { position: relative; min-width: 1160px; height: 730px; }
+    .zone { position: absolute; border: 1px dashed #a9a393; border-radius: 12px; background: rgba(255,255,255,.28); }
+    .zone h2 { position: absolute; top: 12px; left: 16px; margin: 0; color: #59665f; font-size: 12px; letter-spacing: .11em; text-transform: uppercase; }
+    .zone.control { top: 0; left: 0; width: 350px; height: 600px; }
+    .zone.power { top: 0; left: 380px; width: 770px; height: 300px; }
+    .zone.field { top: 325px; left: 380px; width: 770px; height: 275px; }
+    .component { position: absolute; z-index: 2; display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 7px; background: var(--panel); box-shadow: 4px 4px 0 rgba(23,32,29,.12); text-align: center; font-size: 12px; font-weight: 800; }
+    .component small { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; font-weight: 600; }
+    .mega { top: 76px; left: 46px; width: 252px; height: 190px; padding: 20px; border-color: #237764; background: #edf7ef; }
+    .mega strong { font: 800 26px Georgia, serif; }
+    .mega::before { content: "D2-D13  motor outputs  |  A0-A3  feedback"; margin-bottom: 10px; color: var(--accent); font: 700 10px Consolas, monospace; }
+    .supply { top: 70px; left: 418px; width: 148px; height: 95px; border-color: var(--power); }
+    .fuse { top: 188px; left: 472px; width: 70px; height: 42px; border-color: var(--safety); background: #fff6d7; }
+    .relay { top: 70px; left: 650px; width: 184px; height: 95px; border-color: var(--safety); background: #fff6d7; }
+    .bus { top: 190px; left: 636px; width: 215px; height: 48px; border-color: var(--power); background: #fff0e9; }
+    .driver { width: 150px; height: 84px; border-color: var(--signal); background: #edf7fa; }
+    .driver.one { top: 68px; left: 910px; }
+    .driver.two { top: 180px; left: 910px; }
+    .motor { width: 130px; height: 66px; border-radius: 50%; border-color: var(--power); background: #fff0e9; }
+    .motor.one { top: 370px; left: 442px; }
+    .motor.two { top: 370px; left: 622px; }
+    .motor.three { top: 490px; left: 442px; }
+    .motor.four { top: 490px; left: 622px; }
+    .limits { width: 150px; height: 74px; border-color: var(--signal); background: #edf7fa; }
+    .limits.one { top: 360px; left: 875px; }
+    .limits.two { top: 470px; left: 875px; }
+    .estop { top: 365px; left: 55px; width: 180px; height: 80px; border: 5px solid #e0a72a; border-radius: 50%; background: #d44332; color: white; box-shadow: 4px 5px 0 #8d2b21; }
+    .estop small { color: #ffe9a8; }
+    .terminal { position: absolute; z-index: 3; width: 9px; height: 9px; border: 2px solid white; border-radius: 50%; background: currentColor; }
+    .wire { position: absolute; z-index: 1; height: 4px; transform-origin: left center; background: currentColor; color: var(--signal); }
+    .wire.power { color: var(--power); }
+    .wire.safety { color: var(--safety); }
+    .wire.ground { color: var(--ground); }
+    .wire.dashed { height: 0; border-top: 3px dashed currentColor; background: none; }
+    .label { position: absolute; z-index: 4; padding: 3px 5px; border-radius: 4px; background: rgba(255,253,247,.9); color: var(--muted); font: 700 10px Consolas, monospace; white-space: nowrap; }
+    .legend { display: flex; flex-wrap: wrap; gap: 12px 24px; margin: 18px 0 26px; color: var(--muted); font-size: 12px; }
+    .legend span { display: inline-flex; align-items: center; gap: 7px; }
+    .swatch { width: 28px; height: 4px; background: var(--signal); }
+    .swatch.power { background: var(--power); }
+    .swatch.safety { background: var(--safety); }
+    .swatch.ground { background: var(--ground); }
+    .details { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .card { padding: 20px; border: 1px solid var(--line); background: var(--panel); }
+    .card h2 { margin-bottom: 12px; font: 800 22px Georgia, serif; }
+    .scenarios { margin-top: 26px; padding: 22px; border: 1px solid var(--line); background: rgba(255,253,247,.8); }
+    .scenarios > h2 { margin-bottom: 6px; font: 800 28px Georgia, serif; }
+    .scenarios > p { margin-bottom: 18px; color: var(--muted); font-size: 13px; }
+    .scenario-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px 42px; }
+    .scenario-step { position: relative; min-height: 154px; padding: 17px 16px 15px; border: 2px solid var(--line); border-radius: 9px; background: var(--panel); box-shadow: 4px 4px 0 rgba(23,32,29,.08); }
+    .scenario-step::after { content: "->"; position: absolute; top: 58px; right: -35px; color: var(--accent); font: 800 22px Consolas, monospace; }
+    .scenario-step:nth-child(3n)::after { content: ""; }
+    .scenario-step:nth-child(n+4)::before { content: "^"; position: absolute; top: -29px; left: calc(50% - 8px); color: var(--accent); font: 800 22px Consolas, monospace; }
+    .scenario-step h3 { margin: 0 0 8px; font-size: 15px; }
+    .scenario-step p { margin: 0; color: #48564f; font-size: 12px; line-height: 1.5; }
+    .scenario-step strong { display: block; margin-bottom: 4px; color: var(--accent); font: 800 10px Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
+    .scenario-step.ready { border-color: var(--accent); }
+    .scenario-step.emergency { border-color: #d44332; background: #fff1ed; }
+    .scenario-step.limit { border-color: var(--safety); background: #fff8df; }
+    .scenario-step.return { border-color: var(--signal); background: #edf7fa; }
+    .scenario-step.locked { border-color: #8b6c1c; background: #fff6d7; }
+    .scenario-step.reset { border-color: var(--ground); background: #eef3ef; }
+    .scenario-key { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 18px; color: var(--muted); font-size: 11px; }
+    .scenario-key span { display: inline-flex; align-items: center; gap: 6px; }
+    .scenario-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+    .scenario-dot.red { background: #d44332; }
+    .scenario-dot.yellow { background: var(--safety); }
+    .scenario-dot.blue { background: var(--signal); }
+    .scenario-dot.green { background: var(--ground); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 9px 7px; border-bottom: 1px solid #e4dfd2; text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    code { color: #155e68; font-family: Consolas, monospace; }
+    ul { margin: 0; padding-left: 20px; color: #48564f; font-size: 13px; line-height: 1.6; }
+    @media (max-width: 800px) { .page { padding: 16px; } header { display: block; } .warning { margin-top: 16px; } .details { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <div>
+        <h1>TAB HRK physical mock-up</h1>
+        <p>A practical wiring overview for an Arduino Mega 2560 controller, four low-voltage hoist motors, three emergency stations, limit switches, a warning beacon, and a buzzer.</p>
+      </div>
+      <div class="warning"><strong>Build safely:</strong> use a separate motor supply, fuses, motor drivers, and a hardwired emergency-stop relay. Never power a motor directly from an Arduino pin.</div>
+    </header>
+
+    <section class="diagram-shell" aria-label="Interactive-style electrical circuit diagram">
+      <div class="diagram">
+        <div class="zone control"><h2>Control and safety</h2></div>
+        <div class="zone power"><h2>Power distribution and drivers</h2></div>
+        <div class="zone field"><h2>Hoist field devices</h2></div>
+
+        <div class="component mega"> <strong>Arduino Mega 2560</strong><small>logic controller, 5 V signals</small></div>
+        <div class="component estop">EMERGENCY CHAIN<small>Panel A + B + C, normally closed</small></div>
+        <div class="component supply">12 V DC SUPPLY<small>motor power</small></div>
+        <div class="component fuse">FUSE</div>
+        <div class="component relay">SAFETY RELAY<small>coil drops on E-stop</small></div>
+        <div class="component bus">MOTOR POWER BUS<small>switched 12 V</small></div>
+        <div class="component driver one">L298N / BTS7960<small>HRK1 + HRK2</small></div>
+        <div class="component driver two">L298N / BTS7960<small>HRK3 + HRK4</small></div>
+        <div class="component motor one">MOTOR HRK1<small>UP / DOWN</small></div>
+        <div class="component motor two">MOTOR HRK2<small>UP / DOWN</small></div>
+        <div class="component motor three">MOTOR HRK3<small>UP / DOWN</small></div>
+        <div class="component motor four">MOTOR HRK4<small>UP / DOWN</small></div>
+        <div class="component limits one">LIMITS 1-2<small>fully up / fully down</small></div>
+        <div class="component limits two">LIMITS 3-4<small>fully up / fully down</small></div>
+
+        <div class="wire power" style="left:566px;top:116px;width:84px"></div>
+        <div class="wire safety" style="left:492px;top:165px;width:4px;height:23px;transform:rotate(90deg)"></div>
+        <div class="wire power" style="left:507px;top:230px;width:4px;height:45px;transform:rotate(90deg)"></div>
+        <div class="wire safety" style="left:834px;top:116px;width:80px"></div>
+        <div class="wire power" style="left:742px;top:165px;width:4px;height:25px;transform:rotate(90deg)"></div>
+        <div class="wire power" style="left:742px;top:238px;width:4px;height:52px;transform:rotate(90deg)"></div>
+        <div class="wire power" style="left:851px;top:214px;width:59px"></div>
+        <div class="wire power" style="left:910px;top:110px;width:4px;height:260px;transform:rotate(90deg)"></div>
+        <div class="wire power" style="left:910px;top:222px;width:4px;height:268px;transform:rotate(90deg)"></div>
+        <div class="wire power" style="left:514px;top:370px;width:108px;transform:rotate(0deg)"></div>
+        <div class="wire power" style="left:694px;top:370px;width:108px"></div>
+        <div class="wire power" style="left:514px;top:490px;width:108px"></div>
+        <div class="wire power" style="left:694px;top:490px;width:108px"></div>
+        <div class="wire dashed" style="left:298px;top:150px;width:612px;transform:rotate(0deg)"></div>
+        <div class="wire dashed" style="left:298px;top:190px;width:612px;transform:rotate(0deg)"></div>
+        <div class="wire safety" style="left:235px;top:405px;width:145px"></div>
+        <div class="wire safety" style="left:145px;top:266px;width:4px;height:100px;transform:rotate(0deg)"></div>
+        <div class="wire ground" style="left:80px;top:520px;width:830px"></div>
+        <div class="wire ground" style="left:145px;top:445px;width:4px;height:75px"></div>
+        <div class="wire ground" style="left:980px;top:245px;width:4px;height:275px"></div>
+
+        <div class="label" style="left:570px;top:94px;color:var(--power)">+12 V fused</div>
+        <div class="label" style="left:760px;top:246px;color:var(--power)">switched motor supply</div>
+        <div class="label" style="left:425px;top:335px;color:var(--power)">driver outputs</div>
+        <div class="label" style="left:320px;top:132px;color:var(--signal)">D2-D13 direction / enable signals</div>
+        <div class="label" style="left:335px;top:172px;color:var(--signal)">A0-A3 limit feedback</div>
+        <div class="label" style="left:76px;top:493px;color:var(--ground)">common GND</div>
+        <div class="label" style="left:243px;top:385px;color:var(--safety)">NC safety loop</div>
+      </div>
+    </section>
+
+    <div class="legend" aria-label="Wire legend">
+      <span><i class="swatch"></i> Arduino signal / sensor wiring</span>
+      <span><i class="swatch power"></i> motor power</span>
+      <span><i class="swatch safety"></i> hardwired safety chain</span>
+      <span><i class="swatch ground"></i> common ground</span>
+    </div>
+
+    <section class="scenarios" aria-labelledby="scenario-title">
+      <h2 id="scenario-title">index.html control scenarios</h2>
+      <p>This behavior map explains what each button does in the current control-panel interface.</p>
+      <div class="scenario-flow">
+        <article class="scenario-step ready">
+          <strong>Scenario 01</strong>
+          <h3>Mode selector: OFF</h3>
+          <p>The selected panel is locked. Its UP, HOLD/STOP, DOWN, and emergency buttons cannot be pressed.</p>
+        </article>
+        <article class="scenario-step">
+          <strong>Scenario 02</strong>
+          <h3>Mode selector: MASTER or M&amp;S</h3>
+          <p>The panel becomes available. Its emergency button and HRK movement buttons can be selected.</p>
+        </article>
+        <article class="scenario-step">
+          <strong>Scenario 03</strong>
+          <h3>UP button</h3>
+          <p>The selected HRK moves upward. Pressing another movement button replaces the current command; the operation buzzer and blue beacon indicate movement.</p>
+        </article>
+        <article class="scenario-step">
+          <strong>Scenario 04</strong>
+          <h3>DOWN button</h3>
+          <p>The selected HRK moves downward. It continues until HOLD/STOP is pressed or the lower travel limit is reached.</p>
+        </article>
+        <article class="scenario-step limit">
+          <strong>Scenario 05</strong>
+          <h3>HOLD / STOP button</h3>
+          <p>The selected HRK stops and its movement buzzer stops. The active movement command is cleared and the beacon turns off.</p>
+        </article>
+        <article class="scenario-step emergency">
+          <strong>Scenario 06</strong>
+          <h3>Local emergency: press</h3>
+          <p>That panel's assigned HRKs move upward together. Its UP, HOLD/STOP, and DOWN buttons become locked.</p>
+        </article>
+        <article class="scenario-step emergency">
+          <strong>Scenario 07</strong>
+          <h3>Local emergency: release</h3>
+          <p>The assigned HRKs move downward together. At the lower limit, the buzzer and beacon stop and the panel controls unlock.</p>
+        </article>
+        <article class="scenario-step emergency">
+          <strong>Scenario 08</strong>
+          <h3>Panel A emergency: press</h3>
+          <p>The activation alarm sounds, the status changes to EMERGENCY CREW ACTIVATED, and HRK1-4 stop. Movement buttons on all panels are locked, and panels B/C emergency buttons cannot be pressed.</p>
+        </article>
+        <article class="scenario-step limit">
+          <strong>Scenario 09</strong>
+          <h3>Panel A emergency: limit or release</h3>
+          <p>While pressed, HRK1-4 remain stopped and the alarm continues. On release, HRK1-4 move downward until the lower limit.</p>
+        </article>
+        <article class="scenario-step reset">
+          <strong>Scenario 10</strong>
+          <h3>RESET button</h3>
+          <p>All movement stops, emergency states clear, hoists return to the home position, and panels return to their OFF lockout state.</p>
+        </article>
+      </div>
+      <div class="scenario-key" aria-label="Scenario colors">
+        <span><i class="scenario-dot"></i> normal operation</span>
+        <span><i class="scenario-dot red"></i> emergency action</span>
+        <span><i class="scenario-dot yellow"></i> limit or fault</span>
+        <span><i class="scenario-dot blue"></i> automatic return</span>
+        <span><i class="scenario-dot green"></i> reset / safe state</span>
+      </div>
+    </section>
+
+    <section class="details">
+      <article class="card">
+        <h2>Suggested pin map</h2>
+        <table>
+          <thead><tr><th>Function</th><th>Mega pins</th></tr></thead>
+          <tbody>
+            <tr><td>HRK1 driver</td><td><code>D2-D4</code></td></tr>
+            <tr><td>HRK2 driver</td><td><code>D5-D7</code></td></tr>
+            <tr><td>HRK3 driver</td><td><code>D8-D10</code></td></tr>
+            <tr><td>HRK4 driver</td><td><code>D11-D13</code></td></tr>
+            <tr><td>Upper/lower limit pairs</td><td><code>A0-A7</code></td></tr>
+            <tr><td>Panel A/B/C emergency inputs</td><td><code>A8-A10</code></td></tr>
+            <tr><td>Beacon and buzzer</td><td><code>22-23</code></td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="card">
+        <h2>Build notes</h2>
+        <ul>
+          <li>Use 12 V DC geared motors suitable for a small mock-up.</li>
+          <li>Use one driver channel per motor direction pair; choose a driver rated above the motor stall current.</li>
+          <li>Connect every Arduino ground, driver ground, and sensor ground together.</li>
+          <li>Use normally closed limit switches so a broken wire is detected as a fault.</li>
+          <li>Put the emergency buttons in series with the safety-relay coil. The Arduino input only monitors that chain.</li>
+          <li>Use flyback protection where required and place a fuse close to the motor supply.</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

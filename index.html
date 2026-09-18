@@ -602,25 +602,14 @@
       emergency.setAttribute("aria-pressed", String(pressed));
       emergency.classList.toggle("is-pressed", pressed);
       emergency.toggleAttribute("data-alert-suppressed", false);
-      status.textContent = pressed ? "Emergency active" : "Ready";
+      status.textContent = pressed ? "EMERGENCY CREW ACTIVATED" : "Ready";
       status.classList.toggle("alarm", pressed);
       updateBeacon();
       updateEmergencyBuzzer();
     }
 
     function updatePanelAEmergencyLockout() {
-      const panels = Array.from(document.querySelectorAll(".sub-panel"));
-      const enabled = panels.every((panel) => panel.dataset.mode && panel.dataset.mode !== "Off");
-      const wasPressed = panelAEmergency.getAttribute("aria-pressed") === "true";
-      panelAEmergency.disabled = !enabled;
-      if (!enabled) {
-        setEmergencyState(panelAEmergency, panelAStatus, false);
-        if (wasPressed) {
-          document.querySelectorAll(".controls").forEach((controls) => {
-            controls.dispatchEvent(new Event("controls-disabled"));
-          });
-        }
-      }
+      panelAEmergency.disabled = false;
     }
 
     panelAEmergency.addEventListener("click", () => {
@@ -629,7 +618,7 @@
       setEmergencyState(panelAEmergency, panelAStatus, pressed);
       if (pressed) {
         document.querySelectorAll(".controls").forEach((controls) => {
-          controls.dispatchEvent(new Event("emergency-up"));
+          controls.dispatchEvent(new Event("controls-disabled"));
           controls.dispatchEvent(new Event("emergency-lockout-changed"));
         });
       } else {
